@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { desc, eq, sql } from "drizzle-orm"
 import { db } from "./db"
 import { comments, images } from "./db/schema"
@@ -51,10 +52,10 @@ export async function getSitemapImages(): Promise<{ id: number; createdAt: Date 
     .limit(50000)
 }
 
-export async function getImage(id: number): Promise<ImageRow | undefined> {
+export const getImage = cache(async (id: number): Promise<ImageRow | undefined> => {
   const rows = await db.select().from(images).where(eq(images.id, id)).limit(1)
   return rows[0]
-}
+})
 
 export async function getComments(imageId: number): Promise<CommentRow[]> {
   return db

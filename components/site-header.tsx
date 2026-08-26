@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Home, Library } from "lucide-react"
 import { SyncButton } from "./sync-button"
+import { ThemeToggle } from "./theme-toggle"
 
 export function SiteHeader() {
   return (
@@ -15,7 +16,10 @@ export function SiteHeader() {
             <span className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"><Library className="size-3" aria-hidden="true" /> Image archive</span>
           </span>
         </Link>
-        <SyncButton />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <SyncButton />
+        </div>
       </div>
     </header>
   )
