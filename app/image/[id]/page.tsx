@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -68,8 +69,6 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
   const image = await getImage(imageId)
   if (!image) notFound()
 
-  const comments = await getComments(imageId)
-
   // Count this open as a view, after the response is sent so it never blocks render.
   after(async () => {
     try {
@@ -135,9 +134,24 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          <CommentSection imageId={imageId} initialComments={comments} />
+          <Suspense fallback={<CommentsLoading />}>
+            <CommentsPanel imageId={imageId} />
+          </Suspense>
         </div>
       </main>
     </div>
+  )
+}
+
+async function CommentsPanel({ imageId }: { imageId: number }) {
+  const comments = await getComments(imageId)
+  return <CommentSection imageId={imageId} initialComments={comments} />
+}
+
+function CommentsLoading() {
+  return (
+    <aside className="flex min-h-64 items-center justify-center rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground" aria-busy="true">
+      Loading conversation…
+    </aside>
   )
 }

@@ -1,4 +1,4 @@
-import { ImageOff } from "lucide-react"
+import { ImageOff, Images, Sparkles } from "lucide-react"
 import { after } from "next/server"
 import { revalidatePath } from "next/cache"
 import { SiteHeader } from "@/components/site-header"
@@ -9,23 +9,15 @@ import { maybeSync } from "@/lib/sync"
 
 export const dynamic = "force-dynamic"
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ sort?: string }>
-}) {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ sort?: string }> }) {
   const { sort: sortParam } = await searchParams
   const sort: ImageSort = sortParam === "popular" ? "popular" : "new"
   const { images, hasMore } = await getImages(sort)
 
-  // Kick off a throttled background sync after the response is sent. This makes
-  // the 30-minute import work on any Vercel plan (traffic-driven, no paid cron).
   after(async () => {
     try {
       const result = await maybeSync()
-      if (result && result.imported > 0) {
-        revalidatePath("/")
-      }
+      if (result && result.imported > 0) revalidatePath("/")
     } catch (err) {
       console.log("[v0] background sync error:", err instanceof Error ? err.message : String(err))
     }
@@ -34,37 +26,45 @@ export default async function HomePage({
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-12">
-        <div className="mb-8 max-w-2xl">
-          <h1 className="text-balance font-serif text-3xl font-semibold tracking-tight md:text-4xl">
-            Welcome to Emily&apos;s Den
-          </h1>
-          <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
-            A warm little gallery that automatically gathers new images every 30 minutes. Open any
-            picture for a shareable link and join the conversation in the comments.
-          </p>
-        </div>
-
-        {images.length > 0 && (
-          <div className="mb-6 flex items-center justify-end">
-            <SortToggle current={sort} />
-          </div>
-        )}
-
-        {images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
-            <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-              <ImageOff className="size-7" aria-hidden="true" />
-            </span>
-            <h2 className="font-serif text-xl font-medium">No images yet</h2>
-            <p className="mt-2 max-w-sm text-pretty text-sm text-muted-foreground">
-              Once the sync runs, new images from the Drive folder will appear here. Try the
-              &ldquo;Sync now&rdquo; button up top to fetch them right away.
+      <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 md:px-8 md:pb-24 md:pt-14">
+        <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card px-6 py-10 shadow-sm md:px-12 md:py-16">
+          <div className="pointer-events-none absolute right-0 top-0 size-48 rounded-bl-full bg-accent/30" aria-hidden="true" />
+          <div className="relative max-w-3xl">
+            <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-primary">
+              <Sparkles className="size-4" aria-hidden="true" /> A living archive
+            </p>
+            <h1 className="max-w-2xl text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-[-0.04em] md:text-7xl">
+              A den for images worth keeping.
+            </h1>
+            <p className="mt-7 max-w-xl text-pretty text-base leading-7 text-muted-foreground md:text-lg">
+              Emily&apos;s Den is a quietly growing collection of photographs, finds, and fragments gathered from a shared Drive.
             </p>
           </div>
-        ) : (
-          <GalleryGrid initialImages={images} initialHasMore={hasMore} sort={sort} />
-        )}
+          <div className="relative mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/70 pt-5 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2"><Images className="size-4 text-primary" aria-hidden="true" /> {images.length}{hasMore ? "+" : ""} images in view</span>
+            <span>Updated as new finds arrive</span>
+          </div>
+        </section>
+
+        <section className="mt-12" aria-labelledby="collection-heading">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">The collection</p>
+              <h2 id="collection-heading" className="mt-2 font-serif text-3xl font-semibold tracking-tight md:text-4xl">Recent discoveries</h2>
+            </div>
+            {images.length > 0 && <SortToggle current={sort} />}
+          </div>
+
+          {images.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-24 text-center">
+              <span className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground"><ImageOff className="size-7" aria-hidden="true" /></span>
+              <h2 className="font-serif text-2xl font-medium">The den is still quiet</h2>
+              <p className="mt-3 max-w-sm text-pretty leading-6 text-muted-foreground">New images from the Drive folder will appear here after the first sync. Use “Sync now” to check for them.</p>
+            </div>
+          ) : (
+            <GalleryGrid initialImages={images} initialHasMore={hasMore} sort={sort} />
+          )}
+        </section>
       </main>
     </div>
   )
