@@ -7,7 +7,7 @@ import { ArrowLeft, Eye } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { CopyLink } from "@/components/copy-link"
 import { CommentSection } from "@/components/comment-section"
-import { ImageActionLinks } from "@/components/image-actions"
+import { ImageActions } from "@/components/image-actions"
 import { buttonVariants } from "@/components/ui/button"
 import { incrementView } from "@/app/actions/gallery"
 import { getComments, getImage } from "@/lib/queries"
@@ -125,7 +125,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
-                <ImageActionLinks
+                <ImageActions
                   imageName={image.name}
                   thumbnailUrl={image.blobUrl}
                   driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
