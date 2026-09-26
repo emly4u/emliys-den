@@ -5,7 +5,8 @@ export const images = pgTable("images", {
   driveFileId: text("drive_file_id").notNull().unique(),
   name: text("name").notNull(),
   // Thumbnail URL only; full-resolution media remains in Google Drive.
-  blobUrl: text("blob_url").notNull(),
+  // Public thumbnail URL; full-resolution media remains in Google Drive.
+  blobUrl: text("blob_url"),
   contentType: text("content_type"),
   views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
