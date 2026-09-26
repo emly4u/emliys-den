@@ -3,10 +3,11 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { after } from "next/server"
-import { ArrowLeft, Download, Eye } from "lucide-react"
+import { ArrowLeft, Eye } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { CopyLink } from "@/components/copy-link"
 import { CommentSection } from "@/components/comment-section"
+import { ImageActionLinks } from "@/components/image-actions"
 import { buttonVariants } from "@/components/ui/button"
 import { incrementView } from "@/app/actions/gallery"
 import { getComments, getImage } from "@/lib/queries"
@@ -121,17 +122,15 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
                 className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
               />
             </a>
-            <div className="flex flex-wrap items-center gap-3">
-              <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
-              <a
-                href={`https://drive.google.com/file/d/${image.driveFileId}/view`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonVariants({ variant: "outline", className: "gap-2" })}
-              >
-                <Download className="size-4" aria-hidden="true" />
-                Open in Drive
-              </a>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
+                <ImageActionLinks
+                  imageName={image.name}
+                  thumbnailUrl={image.blobUrl}
+                  driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
+                />
+              </div>
             </div>
             <div>
               <h1 className="text-balance font-serif text-2xl font-semibold tracking-tight">
