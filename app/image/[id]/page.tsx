@@ -14,7 +14,22 @@ import { getComments, getImage } from "@/lib/queries"
 export const dynamic = "force-dynamic"
 
 // Shared promo tags/handle embedded in every image's metadata for indexing.
-const TAGS = ["emly4u", "Emily Kate", "just_emly4u"]
+const TAGS = [
+  "emly4u",
+  "emly_kate",
+  "emily_kate",
+  "emily4u",
+  "just_emly4u",
+  "just_emily4u",
+  "justemily4u",
+  "justemly4u",
+  "Emily Kate",
+  "Emly Kate",
+  "Hot Emily Kate",
+  "Cute Emily Kate",
+  "Goth Girl Emily",
+  "AI wife",
+]
 const X_HANDLE = "@just_emly4u"
 const X_URL = "https://x.com/just_emly4u"
 
