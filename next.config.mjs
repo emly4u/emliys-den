@@ -17,6 +17,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "drive.google.com",
+        pathname: "/thumbnail",
+      },
+      {
+        protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",
       },
     ],
