@@ -92,25 +92,30 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
 
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div className="flex flex-col gap-4">
-            <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+            <a
+              href={`https://drive.google.com/file/d/${image.driveFileId}/view`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group overflow-hidden rounded-2xl border border-border/60 bg-card"
+              aria-label={`Open ${image.name} in Google Drive`}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={image.blobUrl || "/placeholder.svg"}
                 alt={image.name}
-                className="max-h-[70vh] w-full object-contain"
+                className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
               />
-            </div>
+            </a>
             <div className="flex flex-wrap items-center gap-3">
-              <CopyLink url={image.blobUrl} />
+              <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
               <a
-                href={image.blobUrl}
+                href={`https://drive.google.com/file/d/${image.driveFileId}/view`}
                 target="_blank"
                 rel="noopener noreferrer"
-                download
                 className={buttonVariants({ variant: "outline", className: "gap-2" })}
               >
                 <Download className="size-4" aria-hidden="true" />
-                Open original
+                Open in Drive
               </a>
             </div>
             <div>

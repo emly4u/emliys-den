@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob"
 import { inArray, sql } from "drizzle-orm"
 import { db } from "./db"
 import { images } from "./db/schema"
@@ -85,16 +84,6 @@ async function listDriveImages(apiKey: string): Promise<DriveFile[]> {
   return files
 }
 
-async function downloadDriveFile(fileId: string, apiKey: string): Promise<ArrayBuffer> {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&supportsAllDrives=true`
-  const res = await fetch(url)
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Drive download failed for ${fileId} (${res.status}): ${text}`)
-  }
-  return res.arrayBuffer()
-}
-
 export type SyncResult = {
   scanned: number
   imported: number
@@ -137,17 +126,14 @@ export async function syncDriveImages(): Promise<SyncResult> {
 
   for (const file of newFiles) {
     try {
-      const buffer = await downloadDriveFile(file.id, apiKey)
-      const blob = await put(`drive/${file.id}-${file.name}`, Buffer.from(buffer), {
-        access: "public",
-        contentType: file.mimeType,
-        addRandomSuffix: false,
-      })
+      // Keep only Google's resized thumbnail URL in the database. The original
+      // file stays in Drive and is opened via driveFileId from the UI.
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${encodeURIComponent(file.id)}&sz=w1600`
 
       await db.insert(images).values({
         driveFileId: file.id,
         name: file.name,
-        blobUrl: blob.url,
+        blobUrl: thumbnailUrl,
         contentType: file.mimeType,
       })
 

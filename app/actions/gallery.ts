@@ -55,7 +55,7 @@ export async function voteComment(commentId: number, imageId: number, direction:
   return { success: true }
 }
 
-export async function triggerSync() {
+export async function triggerSync(): Promise<import("@/lib/sync").SyncResult & { error?: string }> {
 if (!process.env.GCP_API_KEY) {
     return {
       scanned: 0,
@@ -78,7 +78,9 @@ if (!process.env.GCP_API_KEY) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return {
+      scanned: 0,
       imported: 0,
+      skipped: 0,
       importedNames: [] as string[],
       errors: [] as string[],
       error: message,
