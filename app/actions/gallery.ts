@@ -56,12 +56,14 @@ export async function voteComment(commentId: number, imageId: number, direction:
 }
 
 export async function triggerSync() {
-  if (!process.env.GOOGLE_API_KEY) {
+if (!process.env.GCP_API_KEY) {
     return {
+      scanned: 0,
       imported: 0,
-      importedNames: [] as string[],
+      skipped: 0,
+      importedNames: [],
       errors: [] as string[],
-      error: "GOOGLE_API_KEY is not set. Add it in Project Settings → Vars, then try again.",
+      error: "GCP_API_KEY is not set. Add it in Project Settings → Vars, then try again.",
     }
   }
 
