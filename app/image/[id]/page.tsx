@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header"
 import { CopyLink } from "@/components/copy-link"
 import { CommentSection } from "@/components/comment-section"
 import { ImageActions } from "@/components/image-actions"
+import { ImageContextMenu } from "@/components/image-context-menu"
 import { buttonVariants } from "@/components/ui/button"
 import { incrementView } from "@/app/actions/gallery"
 import { getComments, getImage } from "@/lib/queries"
@@ -49,6 +50,7 @@ export async function generateMetadata({
   const title = `${image.name} — Emily's Den`
   const description = `${image.name} · #emly4u #Emily Kate #just_emly4u · ${X_URL}`
   const url = `/image/${imageId}`
+  const previewImage = image.blobUrl || `https://drive.google.com/thumbnail?id=${image.driveFileId}&sz=w1600`
 
   return {
     title,
@@ -61,7 +63,7 @@ export async function generateMetadata({
       description,
       url,
       siteName: "Emily's Den",
-      images: [{ url: image.blobUrl, alt: image.name }],
+      images: [{ url: previewImage, alt: image.name }],
     },
     twitter: {
       card: "summary_large_image",
@@ -69,7 +71,7 @@ export async function generateMetadata({
       creator: X_HANDLE,
       title,
       description,
-      images: [image.blobUrl],
+      images: [previewImage],
     },
     other: {
       "twitter:url": X_URL,
@@ -108,27 +110,32 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
 
         <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div className="flex flex-col gap-4">
-            <a
-              href={`https://drive.google.com/file/d/${image.driveFileId}/view`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group overflow-hidden rounded-2xl border border-border/60 bg-card"
-              aria-label={`Open ${image.name} in Google Drive`}
+            <ImageContextMenu
+              imageName={image.name}
+              downloadUrl={`https://drive.google.com/uc?export=download&id=${image.driveFileId}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image.blobUrl || "/placeholder.svg"}
-                alt={image.name}
-                className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
-              />
-            </a>
+              <a
+                href={`https://drive.google.com/file/d/${image.driveFileId}/view`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block overflow-hidden rounded-2xl border border-border/60 bg-card"
+                aria-label={`Open ${image.name} in Google Drive`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.blobUrl || "/placeholder.svg"}
+                  alt={image.name}
+                  className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
+                />
+              </a>
+            </ImageContextMenu>
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-3">
                 <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
                 <ImageActions
                   imageName={image.name}
-                  thumbnailUrl={image.blobUrl}
                   driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
+                  downloadUrl={`https://drive.google.com/uc?export=download&id=${image.driveFileId}`}
                 />
               </div>
             </div>
