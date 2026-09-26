@@ -21,6 +21,22 @@ export const metadata: Metadata = {
   title: "Emily's Den — A cozy image gallery",
   description:
     "Emily's Den is a warm little corner of the internet for sharing images, getting shareable links, and chatting in the comments.",
+  keywords: [
+    'emly4u',
+    'emly_kate',
+    'emily_kate',
+    'emily4u',
+    'just_emly4u',
+    'just_emily4u',
+    'justemily4u',
+    'justemly4u',
+    'Emily Kate',
+    'Emly Kate',
+    'Hot Emily Kate',
+    'Cute Emily Kate',
+    'Goth Girl Emily',
+    'AI wife',
+  ],
   generator: 'v0.app',
   icons: {
     icon: [

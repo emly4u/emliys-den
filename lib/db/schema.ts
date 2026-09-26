@@ -4,6 +4,7 @@ export const images = pgTable("images", {
   id: serial("id").primaryKey(),
   driveFileId: text("drive_file_id").notNull().unique(),
   name: text("name").notNull(),
+  // Thumbnail URL only; full-resolution media remains in Google Drive.
   blobUrl: text("blob_url").notNull(),
   contentType: text("content_type"),
   views: integer("views").notNull().default(0),

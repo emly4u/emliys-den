@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob"
 import { inArray, sql } from "drizzle-orm"
 import { db } from "./db"
 import { images } from "./db/schema"
@@ -53,7 +52,7 @@ async function listFolderChildren(folderId: string, apiKey: string): Promise<Dri
 
 /**
  * Recursively lists all image files in the configured Drive folder and every
- * subfolder beneath it, using the Drive v3 API. Requires GOOGLE_API_KEY and the
+ * subfolder beneath it, using the Drive v3 API. Requires GCP_API_KEY and the
  * root folder to be shared as "Anyone with the link".
  *
  * The Drive API has no "search descendants" operator, so we walk the folder
@@ -85,16 +84,6 @@ async function listDriveImages(apiKey: string): Promise<DriveFile[]> {
   return files
 }
 
-async function downloadDriveFile(fileId: string, apiKey: string): Promise<ArrayBuffer> {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}&supportsAllDrives=true`
-  const res = await fetch(url)
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Drive download failed for ${fileId} (${res.status}): ${text}`)
-  }
-  return res.arrayBuffer()
-}
-
 export type SyncResult = {
   scanned: number
   imported: number
@@ -108,9 +97,9 @@ export type SyncResult = {
  * Images already present (matched by drive_file_id) are skipped.
  */
 export async function syncDriveImages(): Promise<SyncResult> {
-  const apiKey = process.env.GOOGLE_API_KEY
+  const apiKey = process.env.GCP_API_KEY
   if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY is not set")
+    throw new Error("GCP_API_KEY is not set")
   }
 
   const driveFiles = await listDriveImages(apiKey)
@@ -137,17 +126,14 @@ export async function syncDriveImages(): Promise<SyncResult> {
 
   for (const file of newFiles) {
     try {
-      const buffer = await downloadDriveFile(file.id, apiKey)
-      const blob = await put(`drive/${file.id}-${file.name}`, Buffer.from(buffer), {
-        access: "public",
-        contentType: file.mimeType,
-        addRandomSuffix: false,
-      })
+      // Keep only Google's resized thumbnail URL in the database. The original
+      // file stays in Drive and is opened via driveFileId from the UI.
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${encodeURIComponent(file.id)}&sz=w1600`
 
       await db.insert(images).values({
         driveFileId: file.id,
         name: file.name,
-        blobUrl: blob.url,
+        blobUrl: thumbnailUrl,
         contentType: file.mimeType,
       })
 
@@ -172,7 +158,7 @@ export async function syncDriveImages(): Promise<SyncResult> {
  * Returns the sync result if a run happened, or null if it was throttled.
  */
 export async function maybeSync(): Promise<SyncResult | null> {
-  if (!process.env.GOOGLE_API_KEY) return null
+  if (!process.env.GCP_API_KEY) return null
 
   // Atomically claim the run: only succeeds if enough time has passed and no
   // other run is currently in progress (or the previous one is stale).

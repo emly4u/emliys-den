@@ -55,13 +55,15 @@ export async function voteComment(commentId: number, imageId: number, direction:
   return { success: true }
 }
 
-export async function triggerSync() {
-  if (!process.env.GOOGLE_API_KEY) {
+export async function triggerSync(): Promise<import("@/lib/sync").SyncResult & { error?: string }> {
+if (!process.env.GCP_API_KEY) {
     return {
+      scanned: 0,
       imported: 0,
-      importedNames: [] as string[],
+      skipped: 0,
+      importedNames: [],
       errors: [] as string[],
-      error: "GOOGLE_API_KEY is not set. Add it in Project Settings → Vars, then try again.",
+      error: "GCP_API_KEY is not set. Add it in Project Settings → Vars, then try again.",
     }
   }
 
@@ -76,7 +78,9 @@ export async function triggerSync() {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return {
+      scanned: 0,
       imported: 0,
+      skipped: 0,
       importedNames: [] as string[],
       errors: [] as string[],
       error: message,
