@@ -38,6 +38,29 @@ export const metadata: Metadata = {
     'AI wife',
   ],
   generator: 'v0.app',
+  openGraph: {
+    type: 'website',
+    url: 'https://emly4u.vercel.app',
+    title: "Emily's Den — A cozy image gallery",
+    description:
+      "Emily's Den is a warm little corner of the internet for sharing images, getting shareable links, and chatting in the comments.",
+    siteName: "Emily's Den",
+    images: [
+      {
+        url: '/icon-dark.png',
+        width: 512,
+        height: 512,
+        alt: "Emily's Den",
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: "Emily's Den — A cozy image gallery",
+    description:
+      "Emily's Den is a warm little corner of the internet for sharing images, getting shareable links, and chatting in the comments.",
+    images: ['/icon-dark.png'],
+  },
   icons: {
     icon: [
       {
