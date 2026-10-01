@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { SiteHeader } from "@/components/site-header"
 import { GalleryGrid } from "@/components/gallery-grid"
 import { SortToggle } from "@/components/sort-toggle"
+import { DownloadAllButton } from "@/components/download-all-button"
 import { getImages, type ImageSort } from "@/lib/queries"
 import { maybeSync } from "@/lib/sync"
 
@@ -52,7 +53,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">The collection</p>
               <h2 id="collection-heading" className="mt-2 font-serif text-3xl font-semibold tracking-tight md:text-4xl">Recent discoveries</h2>
             </div>
-            {images.length > 0 && <SortToggle current={sort} />}
+            {images.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <DownloadAllButton initialImages={images} initialHasMore={hasMore} sort={sort} />
+                <SortToggle current={sort} />
+              </div>
+            )}
           </div>
 
           {images.length === 0 ? (
