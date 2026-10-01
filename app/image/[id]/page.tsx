@@ -134,6 +134,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
                 <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
                 <ImageActions
                   imageName={image.name}
+                  imageUrl={image.blobUrl || `https://drive.google.com/thumbnail?id=${image.driveFileId}&sz=w1600`}
                   driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
                   downloadUrl={`https://drive.google.com/uc?export=download&id=${image.driveFileId}`}
                 />
