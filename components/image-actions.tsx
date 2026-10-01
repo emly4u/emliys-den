@@ -19,8 +19,9 @@ export function ImageActions({ imageName, driveUrl, downloadUrl }: { imageName: 
   }
 
   function sendToChatGPT() {
-    const prompt = `This is Emily Kate, Age 19 from "${window.location.host}". Please describe this image neutrally and safely.`
-    window.open(`https://chatgpt.com/?prompt=${encodeURIComponent(prompt)}&url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer")
+    const prompt = `This is Emily Kate, Age 19 from "${window.location.host}". Please describe the image at this public URL neutrally and safely: ${downloadUrl}`
+    const chatUrl = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`
+    window.open(chatUrl, "_blank", "noopener,noreferrer")
   }
 
   return (
