@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 // Adsterra units. The keys and URLs are public (they appear in page markup).
 type BannerUnit = { key: string; width: number; height: number }
@@ -12,7 +12,6 @@ const INLINE_BANNER: BannerUnit = { key: "b31adbd3f6d6aae627a673e5f40c03d8", wid
 const SKYSCRAPER: BannerUnit = { key: "c56cee194a4d1b24830b09af20d13091", width: 160, height: 600 }
 const HALF_SKYSCRAPER: BannerUnit = { key: "6dc2c7111cf540e9cc06fa69bda599e4", width: 160, height: 300 }
 
-const NATIVE_KEY = "3a7c471205865254ca4cfe9c423be27d"
 const SPONSORED_URL = "https://asiaso.org/4/08d731bbb2685e0aac1f63b9c40e9689"
 
 /** Tracks a media query on the client. Null until the first measurement, so no unit loads for the wrong size. */
@@ -91,30 +90,6 @@ export function SideRails() {
         <BannerFrame unit={HALF_SKYSCRAPER} />
       </div>
     </>
-  )
-}
-
-/** Adsterra native banner: its script fills the container found by id. */
-export function NativeBannerAd({ className }: { className?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const container = containerRef.current
-    const script = document.createElement("script")
-    script.async = true
-    script.dataset.cfasync = "false"
-    script.src = `https://brijmohan.org/21/${NATIVE_KEY}`
-    document.body.appendChild(script)
-    return () => {
-      script.remove()
-      container?.replaceChildren()
-    }
-  }, [])
-
-  return (
-    <div className={className} aria-label="Advertisement">
-      <div ref={containerRef} id={`container-${NATIVE_KEY}`} />
-    </div>
   )
 }
 

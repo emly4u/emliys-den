@@ -1,7 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Nunito } from 'next/font/google'
-import Script from 'next/script'
 import { SideRails } from '@/components/ad-slot'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
@@ -96,9 +95,6 @@ export default function RootLayout({
             <>
               <Analytics />
               <SideRails />
-              {/* Site-wide Adsterra scripts (production only, so local dev never fires them). */}
-              <Script data-cfasync="false" strategy="afterInteractive" src="https://ahuramazda.org/1/c5bd1cbe2c53b72ddde17d3a14862897" />
-              <Script data-cfasync="false" strategy="afterInteractive" src="https://brijmohan.org/14/be17538ff39bbb3b5032c3dc9b449c9b" />
             </>
           )}
         </ThemeProvider>
