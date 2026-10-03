@@ -34,7 +34,7 @@ function useMediaQuery(query: string): boolean | null {
 // third-party script isolated from this site (no allow-same-origin).
 function BannerFrame({ unit }: { unit: BannerUnit }) {
   const { key, width, height } = unit
-  const srcDoc = `<!doctype html><html><body style="margin:0;overflow:hidden"><script>atOptions={'key':'${key}','format':'iframe','height':${height},'width':${width},'params':{}};</script><script src="https://brijmohan.org/22/${key}"></script></body></html>`
+  const srcDoc = `<!doctype html><html><body style="margin:0;overflow:hidden;background:transparent"><script>atOptions={'key':'${key}','format':'iframe','height':${height},'width':${width},'params':{}};</script><script src="https://brijmohan.org/22/${key}"></script></body></html>`
 
   return (
     <iframe
@@ -45,7 +45,9 @@ function BannerFrame({ unit }: { unit: BannerUnit }) {
       scrolling="no"
       loading="lazy"
       sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-      className="mx-auto block max-w-full border-0"
+      // The page declares a dark color scheme, so a light srcDoc frame gets an opaque white
+      // backdrop. Matching the frame's scheme to its (light) document keeps empty slots transparent.
+      className="mx-auto block max-w-full border-0 [color-scheme:light]"
     />
   )
 }
@@ -91,6 +93,34 @@ export function SideRails() {
       </div>
     </>
   )
+}
+
+// Click-triggered pop ads (Adsterra). They load for only a fraction of visits.
+const POP_SCRIPTS = [
+  "https://ahuramazda.org/1/c5bd1cbe2c53b72ddde17d3a14862897",
+  "https://brijmohan.org/14/be17538ff39bbb3b5032c3dc9b449c9b",
+]
+const POP_CHANCE = 0.3
+
+let popRolled = false
+
+/** Rolls once per page load and, on a hit, injects the pop scripts. Renders nothing. */
+export function PopAds() {
+  useEffect(() => {
+    if (popRolled) return
+    popRolled = true
+    if (Math.random() >= POP_CHANCE) return
+
+    for (const src of POP_SCRIPTS) {
+      const script = document.createElement("script")
+      script.async = true
+      script.dataset.cfasync = "false"
+      script.src = src
+      document.body.appendChild(script)
+    }
+  }, [])
+
+  return null
 }
 
 export function SponsoredLink({ className }: { className?: string }) {

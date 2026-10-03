@@ -1,7 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Nunito } from 'next/font/google'
-import { SideRails } from '@/components/ad-slot'
+import { PopAds, SideRails } from '@/components/ad-slot'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -95,6 +95,7 @@ export default function RootLayout({
             <>
               <Analytics />
               <SideRails />
+              <PopAds />
             </>
           )}
         </ThemeProvider>
