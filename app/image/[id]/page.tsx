@@ -118,7 +118,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
           <div className="flex flex-col gap-4">
             <ImageContextMenu
               imageName={image.name}
-              driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
+              imageUrl={thumbnailUrl}
               downloadUrl={`https://drive.google.com/uc?export=download&id=${image.driveFileId}`}
             >
               <a

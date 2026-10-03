@@ -10,7 +10,7 @@ export function ImageActions({ imageName, driveUrl, downloadUrl, imageUrl }: { i
   const [chatStatus, setChatStatus] = useState<string | null>(null)
 
   async function copyImageLink() {
-    await navigator.clipboard.writeText(driveUrl)
+    await navigator.clipboard.writeText(window.location.href)
     setImageLinkCopied(true)
     window.setTimeout(() => setImageLinkCopied(false), 1800)
   }

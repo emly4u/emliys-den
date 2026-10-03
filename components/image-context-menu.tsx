@@ -1,27 +1,49 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { Check, Copy, Download } from "lucide-react"
+import { Check, Copy, Download, Image as ImageIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export function ImageContextMenu({
   imageName,
   downloadUrl,
-  driveUrl,
+  imageUrl,
   children,
 }: {
   imageName: string
   downloadUrl: string
-  driveUrl: string
+  imageUrl: string
   children: ReactNode
 }) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [imageCopied, setImageCopied] = useState<"idle" | "done" | "failed">("idle")
 
   async function copyLink() {
-    await navigator.clipboard.writeText(driveUrl)
+    await navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1600)
+  }
+
+  // The async clipboard API only reliably accepts image/png, so re-encode via canvas.
+  async function copyImage() {
+    try {
+      const response = await fetch(imageUrl, { cache: "force-cache" })
+      if (!response.ok) throw new Error(`Image request failed: ${response.status}`)
+      const bitmap = await createImageBitmap(await response.blob())
+      const canvas = document.createElement("canvas")
+      canvas.width = bitmap.width
+      canvas.height = bitmap.height
+      canvas.getContext("2d")?.drawImage(bitmap, 0, 0)
+      const png = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Encode failed"))), "image/png"),
+      )
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": png })])
+      setImageCopied("done")
+    } catch {
+      setImageCopied("failed")
+    }
+    window.setTimeout(() => setImageCopied("idle"), 1600)
   }
 
   useEffect(() => {
@@ -39,7 +61,7 @@ export function ImageContextMenu({
     event.preventDefault()
     setPosition({
       x: Math.min(event.clientX, window.innerWidth - 220),
-      y: Math.min(event.clientY, window.innerHeight - 64),
+      y: Math.min(event.clientY, window.innerHeight - 112),
     })
   }
 
@@ -54,6 +76,14 @@ export function ImageContextMenu({
           style={{ left: position.x, top: position.y }}
           onClick={(event) => event.stopPropagation()}
         >
+          <button
+            type="button"
+            onClick={copyImage}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+          >
+            {imageCopied === "done" ? <Check className="size-4" aria-hidden="true" /> : <ImageIcon className="size-4" aria-hidden="true" />}
+            {imageCopied === "done" ? "Image copied" : imageCopied === "failed" ? "Copy failed" : "Copy image"}
+          </button>
           <button
             type="button"
             onClick={copyLink}
