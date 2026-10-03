@@ -42,9 +42,9 @@ export async function getImages(
   return { images: hasMore ? rows.slice(0, limit) : rows, hasMore }
 }
 
-export async function getSitemapImages(): Promise<{ id: number; createdAt: Date }[]> {
+export async function getSitemapImages(): Promise<{ id: number; driveFileId: string; createdAt: Date }[]> {
   return db
-    .select({ id: images.id, createdAt: images.createdAt })
+    .select({ id: images.id, driveFileId: images.driveFileId, createdAt: images.createdAt })
     .from(images)
     .orderBy(desc(images.createdAt))
     // A single sitemap file is capped at 50,000 URLs by the spec. Bound the

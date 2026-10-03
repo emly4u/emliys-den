@@ -49,8 +49,10 @@ export async function generateMetadata({
 
   const title = `${image.name} — Emily's Den`
   const description = `${image.name} · #emly4u #Emily Kate #just_emly4u · ${X_URL}`
-  const url = `/image/${imageId}`
-  const previewImage = image.blobUrl || `https://drive.google.com/thumbnail?id=${image.driveFileId}&sz=w1600`
+  const url = `https://emly4u.vercel.app/image/${imageId}`
+  // Use Google's public thumbnail as the crawlable preview. The database only
+  // stores a lightweight thumbnail reference, while the original stays in Drive.
+  const previewImage = `https://drive.google.com/thumbnail?id=${encodeURIComponent(image.driveFileId)}&sz=w1600`
 
   return {
     title,
@@ -86,6 +88,8 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
 
   const image = await getImage(imageId)
   if (!image) notFound()
+
+  const thumbnailUrl = `https://drive.google.com/thumbnail?id=${encodeURIComponent(image.driveFileId)}&sz=w1600`
 
   // Count this open as a view, after the response is sent so it never blocks render.
   after(async () => {
@@ -124,7 +128,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={image.blobUrl || "/placeholder.svg"}
+                  src={thumbnailUrl}
                   alt={image.name}
                   className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
                 />
@@ -135,7 +139,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
                 <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
                 <ImageActions
                   imageName={image.name}
-                  imageUrl={image.blobUrl || `https://drive.google.com/thumbnail?id=${image.driveFileId}&sz=w1600`}
+                  imageUrl={thumbnailUrl}
                   driveUrl={`https://drive.google.com/file/d/${image.driveFileId}/view`}
                   downloadUrl={`https://drive.google.com/uc?export=download&id=${image.driveFileId}`}
                 />
