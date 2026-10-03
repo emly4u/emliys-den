@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // Adsterra units. The keys and URLs are public (they appear in page markup).
 type BannerUnit = { key: string; width: number; height: number }
@@ -30,8 +30,9 @@ function useMediaQuery(query: string): boolean | null {
 }
 
 // Adsterra's invoke.js writes its iframe with document.write, which only works in a
-// parser-inserted script. A sandboxed srcDoc frame provides that and keeps the
-// third-party script isolated from this site (no allow-same-origin).
+// parser-inserted script, so a srcDoc frame provides that. It is deliberately not
+// sandboxed: a sandbox gives the frame an opaque origin, and the ad script then fails
+// as soon as it touches cookies or storage, leaving the slot blank.
 function BannerFrame({ unit }: { unit: BannerUnit }) {
   const { key, width, height } = unit
   const srcDoc = `<!doctype html><html><body style="margin:0;overflow:hidden;background:transparent"><script>atOptions={'key':'${key}','format':'iframe','height':${height},'width':${width},'params':{}};</script><script src="https://brijmohan.org/22/${key}"></script></body></html>`
@@ -44,7 +45,6 @@ function BannerFrame({ unit }: { unit: BannerUnit }) {
       height={height}
       scrolling="no"
       loading="lazy"
-      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
       // The page declares a dark color scheme, so a light srcDoc frame gets an opaque white
       // backdrop. Matching the frame's scheme to its (light) document keeps empty slots transparent.
       className="mx-auto block max-w-full border-0 [color-scheme:light]"
@@ -95,7 +95,7 @@ export function SideRails() {
   )
 }
 
-// A-ADS units (public IDs). Plain framed URLs, sandboxed like the banners above.
+// A-ADS units (public IDs). Plain framed URLs; already isolated as a cross-origin frame.
 export const AADS_UNITS = { home: "2457372", image: "2457373" } as const
 
 export function AadsAd({ unitId, className }: { unitId: string; className?: string }) {
@@ -106,9 +106,34 @@ export function AadsAd({ unitId, className }: { unitId: string; className?: stri
         title="Advertisement"
         src={`https://acceptable.a-ads.com/${encodeURIComponent(unitId)}/?size=Adaptive`}
         loading="lazy"
-        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
         className="mx-auto block h-auto w-full max-w-3xl overflow-hidden border-0 p-0 [color-scheme:light]"
       />
+    </div>
+  )
+}
+
+const NATIVE_KEY = "3a7c471205865254ca4cfe9c423be27d"
+
+/** Adsterra native banner: its script fills the container found by id. */
+export function NativeBannerAd({ className }: { className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = containerRef.current
+    const script = document.createElement("script")
+    script.async = true
+    script.dataset.cfasync = "false"
+    script.src = `https://brijmohan.org/21/${NATIVE_KEY}`
+    document.body.appendChild(script)
+    return () => {
+      script.remove()
+      container?.replaceChildren()
+    }
+  }, [])
+
+  return (
+    <div className={className} aria-label="Advertisement">
+      <div ref={containerRef} id={`container-${NATIVE_KEY}`} />
     </div>
   )
 }

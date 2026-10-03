@@ -1,7 +1,7 @@
 import { ImageOff, Images, Sparkles } from "lucide-react"
 import { after } from "next/server"
 import { revalidatePath } from "next/cache"
-import { AADS_UNITS, AadsAd, ResponsiveBannerAd, SponsoredLink } from "@/components/ad-slot"
+import { AADS_UNITS, AadsAd, NativeBannerAd, ResponsiveBannerAd, SponsoredLink } from "@/components/ad-slot"
 import { SiteHeader } from "@/components/site-header"
 import { GalleryGrid } from "@/components/gallery-grid"
 import { SortToggle } from "@/components/sort-toggle"
@@ -85,6 +85,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <GalleryGrid initialImages={images} initialHasMore={hasMore} sort={sort} />
           )}
         </section>
+
+        <NativeBannerAd className="mt-12" />
       </main>
     </div>
   )
