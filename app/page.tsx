@@ -36,7 +36,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               alt=""
               aria-hidden="true"
               referrerPolicy="no-referrer"
-              className="pointer-events-none absolute inset-y-0 right-0 h-full w-full object-cover opacity-30 [mask-image:linear-gradient(to_right,transparent_0%,black_70%)] md:w-3/5 md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent_0%,black_55%)]"
+              className="pointer-events-none absolute inset-y-0 right-0 h-full w-full object-cover object-top opacity-30 [mask-image:linear-gradient(to_right,transparent_0%,black_70%)] md:w-3/5 md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent_0%,black_55%)]"
             />
           ) : (
             <div className="pointer-events-none absolute right-0 top-0 size-48 rounded-bl-full bg-accent/30" aria-hidden="true" />
