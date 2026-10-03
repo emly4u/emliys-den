@@ -26,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: image.createdAt,
         changeFrequency: 'weekly',
         priority: 0.7,
+        images: [`https://drive.google.com/thumbnail?id=${encodeURIComponent(image.driveFileId)}&sz=w1600`],
       })
     }
   } catch (error) {

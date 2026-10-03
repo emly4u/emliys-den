@@ -27,23 +27,18 @@ export function DownloadAllButton({ initialImages, initialHasMore, sort }: { ini
         hasMore = page.hasMore
       }
 
-      for (const [index, image] of allImages.entries()) {
-        const url = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(image.driveFileId)}`
-        const response = await fetch(url)
-        if (!response.ok) throw new Error(`Download failed for image ${index + 1}`)
-        const blob = await response.blob()
-        const objectUrl = URL.createObjectURL(blob)
+      // Google Drive does not allow browser-side fetches from this origin (CORS).
+      // Let the browser download the original file directly instead of fetching thumbnails.
+      for (const image of allImages) {
         const link = document.createElement("a")
-        link.href = objectUrl
-        link.download = `${image.name || `image-${index + 1}`}.jpg`
-        document.body.appendChild(link)
+        link.href = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(image.driveFileId)}`
+        link.target = "_blank"
+        link.rel = "noopener noreferrer"
         link.click()
-        link.remove()
-        URL.revokeObjectURL(objectUrl)
-        await new Promise((resolve) => window.setTimeout(resolve, 250))
+        await new Promise((resolve) => window.setTimeout(resolve, 450))
       }
 
-      setStatus(`${allImages.length} images downloaded`)
+      setStatus(`Started downloads for ${allImages.length} images`)
     } catch {
       setStatus("Some images could not be downloaded. Try downloading them individually.")
     } finally {
