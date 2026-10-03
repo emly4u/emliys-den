@@ -1,6 +1,5 @@
 "use client"
 
-import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 // Adsterra units. The keys and URLs are public (they appear in page markup).
@@ -96,25 +95,18 @@ export function SideRails() {
   )
 }
 
-// Click-triggered pop ads (Adsterra). They load for only a fraction of visits.
+// Click-triggered pop ads (Adsterra).
 const POP_SCRIPTS = [
   "https://ahuramazda.org/1/c5bd1cbe2c53b72ddde17d3a14862897",
   "https://brijmohan.org/14/be17538ff39bbb3b5032c3dc9b449c9b",
 ]
-const POP_CHANCE = 0.3
 
 let popInjected = false
 
-/**
- * Rolls on every page load and every in-site navigation. On a hit, injects the pop
- * scripts (once; a script that has loaded cannot be unloaded until the next full
- * page load). Renders nothing.
- */
+/** Injects the pop scripts once per page load. Renders nothing. */
 export function PopAds() {
-  const pathname = usePathname()
-
   useEffect(() => {
-    if (popInjected || Math.random() >= POP_CHANCE) return
+    if (popInjected) return
     popInjected = true
 
     for (const src of POP_SCRIPTS) {
@@ -124,7 +116,7 @@ export function PopAds() {
       script.src = src
       document.body.appendChild(script)
     }
-  }, [pathname])
+  }, [])
 
   return null
 }
