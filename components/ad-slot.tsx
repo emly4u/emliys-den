@@ -1,5 +1,6 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 // Adsterra units. The keys and URLs are public (they appear in page markup).
@@ -102,14 +103,19 @@ const POP_SCRIPTS = [
 ]
 const POP_CHANCE = 0.3
 
-let popRolled = false
+let popInjected = false
 
-/** Rolls once per page load and, on a hit, injects the pop scripts. Renders nothing. */
+/**
+ * Rolls on every page load and every in-site navigation. On a hit, injects the pop
+ * scripts (once; a script that has loaded cannot be unloaded until the next full
+ * page load). Renders nothing.
+ */
 export function PopAds() {
+  const pathname = usePathname()
+
   useEffect(() => {
-    if (popRolled) return
-    popRolled = true
-    if (Math.random() >= POP_CHANCE) return
+    if (popInjected || Math.random() >= POP_CHANCE) return
+    popInjected = true
 
     for (const src of POP_SCRIPTS) {
       const script = document.createElement("script")
@@ -118,7 +124,7 @@ export function PopAds() {
       script.src = src
       document.body.appendChild(script)
     }
-  }, [])
+  }, [pathname])
 
   return null
 }
