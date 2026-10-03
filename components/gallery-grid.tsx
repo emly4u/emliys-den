@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowUpRight, Eye, Loader2, MessageCircle } from "lucide-react"
+import { MotionImage } from "@/components/animation-toggle"
 import { loadMoreImages } from "@/app/actions/gallery"
 import { IMAGES_PAGE_SIZE, type ImageSort, type ImageWithCount } from "@/lib/images"
 
@@ -58,7 +59,7 @@ export function GalleryGrid({ initialImages, initialHasMore, sort }: { initialIm
   return <>
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
       {images.map((image, index) => <Link key={image.id} href={`/image/${image.id}`} data-gallery-card data-image-url={image.blobUrl || undefined} className="group relative mb-4 block break-inside-avoid overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background">
-        <Image src={image.blobUrl || "/placeholder.svg"} alt={image.name} width={600} height={600} sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" loading={index < IMAGES_PAGE_SIZE ? "eager" : "lazy"} priority={index < 4} fetchPriority={index < 4 ? "high" : "auto"} placeholder="empty" unoptimized className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+        <MotionImage><Image src={image.blobUrl || "/placeholder.svg"} alt={image.name} width={600} height={600} sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw" loading={index < IMAGES_PAGE_SIZE ? "eager" : "lazy"} priority={index < 4} fetchPriority={index < 4 ? "high" : "auto"} placeholder="empty" unoptimized className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" /></MotionImage>
         <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-foreground/85 via-foreground/10 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
           <div className="flex items-end justify-between gap-3 text-background">
             <span className="line-clamp-2 text-sm font-semibold leading-5">{image.name}</span>
