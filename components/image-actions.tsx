@@ -1,12 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Download, ExternalLink, MessageCircle, Share2 } from "lucide-react"
+import { Check, Copy, Download, ExternalLink, MessageCircle, Share2 } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 
 export function ImageActions({ imageName, driveUrl, downloadUrl, imageUrl }: { imageName: string; driveUrl: string; downloadUrl: string; imageUrl: string }) {
   const [copied, setCopied] = useState(false)
+  const [imageLinkCopied, setImageLinkCopied] = useState(false)
   const [chatStatus, setChatStatus] = useState<string | null>(null)
+
+  async function copyImageLink() {
+    await navigator.clipboard.writeText(driveUrl)
+    setImageLinkCopied(true)
+    window.setTimeout(() => setImageLinkCopied(false), 1800)
+  }
 
   async function shareImage() {
     const pageUrl = window.location.href
@@ -51,6 +58,10 @@ export function ImageActions({ imageName, driveUrl, downloadUrl, imageUrl }: { i
       <a href={driveUrl} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", className: "gap-2" })}>
         <ExternalLink className="size-4" aria-hidden="true" /> Open in Drive
       </a>
+      <button type="button" onClick={copyImageLink} className={buttonVariants({ variant: "outline", className: "gap-2" })}>
+        {imageLinkCopied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+        {imageLinkCopied ? "Link copied" : "Copy image link"}
+      </button>
       <a href={downloadUrl} download={`${imageName}.jpg`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", className: "gap-2" })}><Download className="size-4" aria-hidden="true" /> Download</a>
       <button type="button" onClick={shareImage} className={buttonVariants({ variant: "outline", className: "gap-2" })}>
         {copied ? <Check className="size-4" aria-hidden="true" /> : <Share2 className="size-4" aria-hidden="true" />}

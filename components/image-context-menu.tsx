@@ -1,19 +1,28 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { Download } from "lucide-react"
+import { Check, Copy, Download } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export function ImageContextMenu({
   imageName,
   downloadUrl,
+  driveUrl,
   children,
 }: {
   imageName: string
   downloadUrl: string
+  driveUrl: string
   children: ReactNode
 }) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(driveUrl)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1600)
+  }
 
   useEffect(() => {
     if (!position) return
@@ -45,6 +54,14 @@ export function ImageContextMenu({
           style={{ left: position.x, top: position.y }}
           onClick={(event) => event.stopPropagation()}
         >
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
+          >
+            {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+            {copied ? "Link copied" : "Copy image link"}
+          </button>
           <a
             href={downloadUrl}
             download={`${imageName}.jpg`}
