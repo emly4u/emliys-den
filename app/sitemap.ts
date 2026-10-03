@@ -26,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: image.createdAt,
         changeFrequency: 'weekly',
         priority: 0.7,
+        // Explicit image entries help Google discover the gallery assets even
+        // though each image is rendered from a client-accessible Drive URL.
+        images: [
+          image.blobUrl ||
+            `https://drive.google.com/thumbnail?id=${encodeURIComponent(image.driveFileId)}&sz=w1600`,
+        ],
       })
     }
   } catch (error) {
