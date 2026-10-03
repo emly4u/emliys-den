@@ -7,12 +7,12 @@ import { useEffect, useState } from "react"
 export function ImageContextMenu({
   imageName,
   downloadUrl,
-  imageUrl,
+  imageId,
   children,
 }: {
   imageName: string
   downloadUrl: string
-  imageUrl: string
+  imageId: number
   children: ReactNode
 }) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
@@ -28,7 +28,7 @@ export function ImageContextMenu({
   // The async clipboard API only reliably accepts image/png, so re-encode via canvas.
   async function copyImage() {
     try {
-      const response = await fetch(imageUrl, { cache: "force-cache" })
+      const response = await fetch(`/api/image/${imageId}`)
       if (!response.ok) throw new Error(`Image request failed: ${response.status}`)
       const bitmap = await createImageBitmap(await response.blob())
       const canvas = document.createElement("canvas")
