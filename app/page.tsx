@@ -49,7 +49,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               A den for images worth keeping.
             </h1>
             <p className="mt-7 max-w-xl text-pretty text-base leading-7 text-muted-foreground md:text-lg">
-              Emily&apos;s Den is a quietly growing collection of photographs, finds, and fragments gathered from a shared Drive.
+              Emily&apos;s Den is a growing collection of images, kept together in one place and added to as new ones arrive.
             </p>
           </div>
           <div className="relative mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/70 pt-5 text-sm text-muted-foreground">
