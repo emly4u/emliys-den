@@ -95,32 +95,6 @@ export function SideRails() {
   )
 }
 
-// Click-triggered pop ads (Adsterra).
-const POP_SCRIPTS = [
-  "https://ahuramazda.org/1/c5bd1cbe2c53b72ddde17d3a14862897",
-  "https://brijmohan.org/14/be17538ff39bbb3b5032c3dc9b449c9b",
-]
-
-let popInjected = false
-
-/** Injects the pop scripts once per page load. Renders nothing. */
-export function PopAds() {
-  useEffect(() => {
-    if (popInjected) return
-    popInjected = true
-
-    for (const src of POP_SCRIPTS) {
-      const script = document.createElement("script")
-      script.async = true
-      script.dataset.cfasync = "false"
-      script.src = src
-      document.body.appendChild(script)
-    }
-  }, [])
-
-  return null
-}
-
 // A-ADS units (public IDs). Plain framed URLs, sandboxed like the banners above.
 export const AADS_UNITS = { home: "2457372", image: "2457373" } as const
 
