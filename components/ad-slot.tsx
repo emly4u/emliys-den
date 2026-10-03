@@ -129,6 +129,24 @@ export function PopAds() {
   return null
 }
 
+// A-ADS units (public IDs). Plain framed URLs, sandboxed like the banners above.
+export const AADS_UNITS = { home: "2457372", image: "2457373" } as const
+
+export function AadsAd({ unitId, className }: { unitId: string; className?: string }) {
+  return (
+    <div className={className} aria-label="Advertisement">
+      <iframe
+        data-aa={unitId}
+        title="Advertisement"
+        src={`https://acceptable.a-ads.com/${encodeURIComponent(unitId)}/?size=Adaptive`}
+        loading="lazy"
+        sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+        className="mx-auto block h-auto w-full max-w-3xl overflow-hidden border-0 p-0 [color-scheme:light]"
+      />
+    </div>
+  )
+}
+
 export function SponsoredLink({ className }: { className?: string }) {
   return (
     <p className={className}>

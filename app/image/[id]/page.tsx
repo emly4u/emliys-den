@@ -12,7 +12,7 @@ import { ImageContextMenu } from "@/components/image-context-menu"
 import { CachedDriveImage } from "@/components/cached-drive-image"
 import { ImageMotionButton, MotionImage } from "@/components/animation-toggle"
 import { WindCanvas } from "@/components/wind-image"
-import { InlineBannerAd, RectangleAd, SponsoredLink } from "@/components/ad-slot"
+import { AADS_UNITS, AadsAd, InlineBannerAd, RectangleAd, SponsoredLink } from "@/components/ad-slot"
 import { buttonVariants } from "@/components/ui/button"
 import { incrementView } from "@/app/actions/gallery"
 import { getComments, getImage } from "@/lib/queries"
@@ -180,6 +180,7 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
           <div className="flex flex-col gap-6">
             <RectangleAd />
             <SponsoredLink className="-mt-3 text-center" />
+            <AadsAd unitId={AADS_UNITS.image} />
             <Suspense fallback={<CommentsLoading />}>
               <CommentsPanel imageId={imageId} />
             </Suspense>

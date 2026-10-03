@@ -42,6 +42,12 @@ export async function getImages(
   return { images: hasMore ? rows.slice(0, limit) : rows, hasMore }
 }
 
+/** One uniformly random image from the whole table, independent of sort and paging. */
+export async function getRandomImage(): Promise<ImageRow | undefined> {
+  const rows = await db.select().from(images).orderBy(sql`random()`).limit(1)
+  return rows[0]
+}
+
 export async function getSitemapImages(): Promise<{ id: number; driveFileId: string; createdAt: Date }[]> {
   return db
     .select({ id: images.id, driveFileId: images.driveFileId, createdAt: images.createdAt })

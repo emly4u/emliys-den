@@ -1,11 +1,11 @@
 import { ImageOff, Images, Sparkles } from "lucide-react"
 import { after } from "next/server"
 import { revalidatePath } from "next/cache"
-import { ResponsiveBannerAd, SponsoredLink } from "@/components/ad-slot"
+import { AADS_UNITS, AadsAd, ResponsiveBannerAd, SponsoredLink } from "@/components/ad-slot"
 import { SiteHeader } from "@/components/site-header"
 import { GalleryGrid } from "@/components/gallery-grid"
 import { SortToggle } from "@/components/sort-toggle"
-import { getImages, type ImageSort } from "@/lib/queries"
+import { getImages, getRandomImage, type ImageSort } from "@/lib/queries"
 import { maybeSync } from "@/lib/sync"
 
 export const dynamic = "force-dynamic"
@@ -13,8 +13,7 @@ export const dynamic = "force-dynamic"
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ sort?: string }> }) {
   const { sort: sortParam } = await searchParams
   const sort: ImageSort = sortParam === "popular" ? "popular" : "new"
-  const { images, hasMore } = await getImages(sort)
-  const heroImage = images.length > 0 ? images[Math.floor(Math.random() * images.length)] : null
+  const [{ images, hasMore }, heroImage] = await Promise.all([getImages(sort), getRandomImage()])
 
   after(async () => {
     try {
@@ -61,6 +60,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
         <ResponsiveBannerAd className="mt-8" />
         <SponsoredLink className="mt-2 text-center" />
+        <AadsAd unitId={AADS_UNITS.home} className="mt-4" />
 
         <section className="mt-12" aria-labelledby="collection-heading">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
