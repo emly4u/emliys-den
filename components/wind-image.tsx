@@ -2,29 +2,17 @@
 
 import { useEffect, useRef } from "react"
 import { motionEventName } from "@/components/animation-toggle"
+import { segmentHairAndClothes } from "@/lib/wind-segmentation"
 import { ANIMATE_SHADER, PRECOMPUTE_SHADER, VERTEX_SHADER } from "@/lib/wind-shaders"
 
 const WIND = 1.25
 const DURATION_SECONDS = 6
-// The reference portrait width the wind frequencies were tuned for.
+// The reference portrait width the wind amplitudes and frequencies were tuned for.
 const REFERENCE_WIDTH = 1148
 
-type FaceDetectorLike = { detect(image: CanvasImageSource): Promise<{ boundingBox: DOMRectReadOnly }[]> }
-
-async function detectFaceCenterX(image: HTMLImageElement): Promise<number> {
-  const Detector = (window as unknown as { FaceDetector?: new () => FaceDetectorLike }).FaceDetector
-  if (!Detector) return image.naturalWidth / 2
-  try {
-    const faces = await new Detector().detect(image)
-    if (faces.length === 0) return image.naturalWidth / 2
-    const { x, width } = faces.reduce((a, b) =>
-      a.boundingBox.width * a.boundingBox.height > b.boundingBox.width * b.boundingBox.height ? a : b,
-    ).boundingBox
-    return x + width / 2
-  } catch {
-    return image.naturalWidth / 2
-  }
-}
+const PORTRAIT_UNIT = 0
+const MOTION_UNIT = 1
+const MASK_UNIT = 2
 
 function createProgram(gl: WebGLRenderingContext, fragmentSource: string): WebGLProgram {
   const program = gl.createProgram()
@@ -54,7 +42,7 @@ function createTexture(gl: WebGLRenderingContext, unit: number): WebGLTexture {
   return texture
 }
 
-function useUniforms(gl: WebGLRenderingContext, program: WebGLProgram) {
+function useProgramWithQuad(gl: WebGLRenderingContext, program: WebGLProgram) {
   gl.useProgram(program)
   const quad = gl.getAttribLocation(program, "a_pos")
   gl.enableVertexAttribArray(quad)
@@ -66,9 +54,10 @@ function useUniforms(gl: WebGLRenderingContext, program: WebGLProgram) {
 }
 
 /**
- * Overlays a live WebGL wind effect (hair and cloth sway) on top of the image
- * rendered beneath it. Hidden when motion is off or WebGL is unavailable, in
- * which case the underlying <img> shows through untouched.
+ * Overlays a live WebGL wind effect on the image rendered beneath it. A person
+ * segmentation pass restricts the motion to hair and clothes; skin and
+ * background never move. Hidden when motion is off, WebGL is unavailable, or
+ * segmentation fails, in which case the underlying <img> shows through untouched.
  */
 export function WindCanvas({ imageId }: { imageId: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -88,8 +77,8 @@ export function WindCanvas({ imageId }: { imageId: number }) {
 
     function sync() {
       if (!canvas || !draw) return
-      const shouldAnimate = motionEnabled() && !document.hidden
       canvas.style.visibility = motionEnabled() ? "visible" : "hidden"
+      const shouldAnimate = motionEnabled() && !document.hidden
       if (shouldAnimate && !animating) {
         animating = true
         frameId = requestAnimationFrame(draw)
@@ -99,59 +88,66 @@ export function WindCanvas({ imageId }: { imageId: number }) {
       }
     }
 
-    // Same-origin bytes, so the canvas is never tainted and WebGL can sample them.
-    const image = new Image()
-    image.onload = async () => {
-      const gl2 = gl as WebGLRenderingContext
+    async function setup(image: HTMLImageElement) {
+      const mask = await segmentHairAndClothes(image)
+      if (cancelled || !mask.hasMovable || !canvas || !gl) return
+
       const width = image.naturalWidth
       const height = image.naturalHeight
-      const centerX = await detectFaceCenterX(image)
-      if (cancelled) return
       canvas.width = width
       canvas.height = height
 
-      gl2.bindBuffer(gl2.ARRAY_BUFFER, gl2.createBuffer())
-      gl2.bufferData(gl2.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl2.STATIC_DRAW)
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW)
 
-      // Portrait on unit 0, amplitude map on unit 1.
-      createTexture(gl2, 0)
-      gl2.texImage2D(gl2.TEXTURE_2D, 0, gl2.RGBA, gl2.RGBA, gl2.UNSIGNED_BYTE, image)
-      const motionTexture = createTexture(gl2, 1)
-      gl2.texImage2D(gl2.TEXTURE_2D, 0, gl2.RGBA, width, height, 0, gl2.RGBA, gl2.UNSIGNED_BYTE, null)
-      const framebuffer = gl2.createFramebuffer()
-      gl2.bindFramebuffer(gl2.FRAMEBUFFER, framebuffer)
-      gl2.framebufferTexture2D(gl2.FRAMEBUFFER, gl2.COLOR_ATTACHMENT0, gl2.TEXTURE_2D, motionTexture, 0)
+      createTexture(gl, PORTRAIT_UNIT)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
 
-      const precompute = useUniforms(gl2, createProgram(gl2, PRECOMPUTE_SHADER))
-      precompute.set1i("u_portrait", 0)
-      precompute.set1f("u_w", width)
-      precompute.set1f("u_h", height)
-      precompute.set1f("u_cx", centerX)
-      gl2.viewport(0, 0, width, height)
-      gl2.drawArrays(gl2.TRIANGLE_STRIP, 0, 4)
-      gl2.bindFramebuffer(gl2.FRAMEBUFFER, null)
+      createTexture(gl, MASK_UNIT)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, mask.width, mask.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, mask.rgba)
 
-      const animateProgram = createProgram(gl2, ANIMATE_SHADER)
-      const animate = useUniforms(gl2, animateProgram)
-      const scale = REFERENCE_WIDTH / width
-      animate.set1i("u_portrait", 0)
-      animate.set1i("u_motion", 1)
+      const motionTexture = createTexture(gl, MOTION_UNIT)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+      const framebuffer = gl.createFramebuffer()
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, motionTexture, 0)
+
+      const precompute = useProgramWithQuad(gl, createProgram(gl, PRECOMPUTE_SHADER))
+      precompute.set1i("u_mask", MASK_UNIT)
+      precompute.set1f("u_aspect", height / width)
+      gl.viewport(0, 0, width, height)
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+
+      const animateProgram = createProgram(gl, ANIMATE_SHADER)
+      const animate = useProgramWithQuad(gl, animateProgram)
+      const scale = width / REFERENCE_WIDTH
+      animate.set1i("u_portrait", PORTRAIT_UNIT)
+      animate.set1i("u_motion", MOTION_UNIT)
       animate.set1f("u_wind", WIND)
       animate.set1f("u_duration", DURATION_SECONDS)
       animate.set1f("u_w", width)
       animate.set1f("u_h", height)
-      animate.set1f("u_cx", centerX)
-      animate.set1f("u_freq_yc", 0.013 * scale)
-      animate.set1f("u_freq_xc", 0.007 * scale)
-      const timeLocation = gl2.getUniformLocation(animateProgram, "u_time")
+      animate.set1f("u_scale", scale)
+      animate.set1f("u_freq_yc", 0.013 / scale)
+      animate.set1f("u_freq_xc", 0.007 / scale)
+      const timeLocation = gl.getUniformLocation(animateProgram, "u_time")
 
       const startedAt = performance.now()
       draw = (now) => {
-        gl2.uniform1f(timeLocation, (now - startedAt) * 0.001)
-        gl2.drawArrays(gl2.TRIANGLE_STRIP, 0, 4)
+        gl.uniform1f(timeLocation, (now - startedAt) * 0.001)
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
         frameId = requestAnimationFrame(draw!)
       }
       sync()
+    }
+
+    // Same-origin bytes, so the canvas is never tainted and WebGL can sample them.
+    const image = new Image()
+    image.onload = () => {
+      setup(image).catch(() => {
+        // Without a reliable hair/clothes mask, leave the image still.
+      })
     }
     image.src = `/api/image/${imageId}`
 

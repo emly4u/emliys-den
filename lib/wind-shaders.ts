@@ -1,4 +1,4 @@
-// GLSL for the live wind effect (ported from live_time_flowy.py).
+// GLSL for the live wind effect (derived from live_time_flowy.py).
 // UV y=0 is the image top, so no UNPACK_FLIP_Y is needed for the portrait texture.
 
 export const VERTEX_SHADER = `
@@ -10,42 +10,51 @@ void main(){
 }`
 
 // Pass 1 (runs once into a framebuffer): hair amplitude in R, cloth amplitude in G.
+// Driven by the segmentation mask (R hair, G clothes, B skin) so only hair and
+// clothes can move:
+//   - the mask is eroded so region edges stay put (no tearing against skin or background)
+//   - amplitude fades to zero near any skin, so roots and seams stay anchored
+//     and only free-hanging ends sway
 export const PRECOMPUTE_SHADER = `
 precision highp float;
-uniform sampler2D u_portrait;
-uniform float u_w;
-uniform float u_h;
-uniform float u_cx;
+uniform sampler2D u_mask;
+uniform float u_aspect; /* image height / width */
 varying vec2 v_uv;
 
+const float HAIR_AMP  = 10.5;
+const float CLOTH_AMP = 12.;
+const float AMP_MAX   = 15.;
+
+/* mean of the mask over 8 directions at a given radius (in image-height units) */
+vec3 ring(float radius){
+  vec3 sum = vec3(0.);
+  for(int i = 0; i < 8; i++){
+    float a = float(i) * 0.785398;
+    vec2 offset = vec2(cos(a) * u_aspect, sin(a)) * radius;
+    sum += texture2D(u_mask, v_uv + offset).rgb;
+  }
+  return sum / 8.;
+}
+
 void main(){
-  float yy = v_uv.y * u_h;
-  vec4  c  = texture2D(u_portrait, v_uv);
+  vec3 centre = texture2D(u_mask, v_uv).rgb;
 
-  float skin    = clamp((c.r - c.b - 0.025)*12., 0., 1.);
-  float no_skin = 1. - skin*0.9;
+  /* erosion: only well-inside pixels of a region may move */
+  vec3 inner = (centre + ring(0.004) + ring(0.008) + ring(0.012)) / 4.;
+  float hair_core  = smoothstep(0.6, 0.98, inner.r);
+  float cloth_core = smoothstep(0.6, 0.98, inner.g);
 
-  float above   = 1. - smoothstep(0.15, 0.38, v_uv.y);
-  float tip_fac = clamp((yy - u_h*0.04) / (u_h*0.22), 0.08, 1.);
-  float hair_a  = above * (1. - skin) * tip_fac * 10.5;
+  /* proximity to skin within ~10 % of the image height */
+  float near_skin = (ring(0.02) + ring(0.04) + ring(0.07) + ring(0.10)).b / 4.;
+  float anchor    = 1. - smoothstep(0., 0.35, near_skin);
 
-  float cx_n    = u_cx > 0. ? u_cx / u_w : 0.5;
-  float outer   = clamp((abs(v_uv.x - cx_n) - 0.11) / 0.22, 0., 1.);
-  float hanging = clamp((v_uv.y - 0.30) / 0.60, 0., 1.);
-  float hem     = clamp((v_uv.y - 0.57) / 0.43, 0., 1.);
+  /* cloth sways more toward the bottom of the frame (hems) */
+  float hang = 0.35 + 0.65 * smoothstep(0.30, 0.90, v_uv.y);
 
-  float sleeve_a = clamp(smoothstep(0.28,0.50,v_uv.y)
-                         * (1.-smoothstep(0.70,0.85,v_uv.y))
-                         * outer, 0., 1.)
-                   * (1.2 + 11.*hanging) * (0.40 + 0.60*outer) * no_skin;
-  float skirt_a  = smoothstep(0.52, 0.68, v_uv.y)
-                   * (1.0 + 14.*hem) * (0.20 + 0.80*outer) * no_skin;
-  float cloth_a  = max(sleeve_a, skirt_a);
+  float hair_a  = hair_core  * anchor * HAIR_AMP;
+  float cloth_a = cloth_core * anchor * hang * CLOTH_AMP;
 
-  const float AMP_MAX = 15.;
-  gl_FragColor = vec4(clamp(hair_a/AMP_MAX,0.,1.),
-                      clamp(cloth_a/AMP_MAX,0.,1.),
-                      0., 1.);
+  gl_FragColor = vec4(hair_a / AMP_MAX, cloth_a / AMP_MAX, 0., 1.);
 }`
 
 // Pass 2 (every frame): displace the portrait by the animated wind field.
@@ -58,7 +67,7 @@ uniform float u_wind;
 uniform float u_duration;
 uniform float u_w;
 uniform float u_h;
-uniform float u_cx;
+uniform float u_scale;  /* image width / reference width: keeps motion resolution independent */
 uniform float u_freq_yc;
 uniform float u_freq_xc;
 varying vec2 v_uv;
@@ -70,13 +79,13 @@ void main(){
   float xx = v_uv.x * u_w;
   float yy = v_uv.y * u_h;
 
-  // Framebuffer rows are stored bottom-up relative to v_uv, so flip y when sampling.
-  vec2  amp     = texture2D(u_motion, vec2(v_uv.x, 1. - v_uv.y)).rg * AMP_MAX;
+  /* framebuffer rows are stored bottom-up relative to v_uv, so flip y when sampling */
+  vec2  amp     = texture2D(u_motion, vec2(v_uv.x, 1. - v_uv.y)).rg * AMP_MAX * u_scale;
   float hair_a  = amp.r;
   float cloth_a = amp.g;
 
   float hp = yy*0.022 + xx*0.006;
-  float cp = yy*u_freq_yc + abs(xx - u_cx)*u_freq_xc;
+  float cp = yy*u_freq_yc + abs(xx - 0.5*u_w)*u_freq_xc;
 
   float phase = PI2 * mod(u_time, u_duration) / u_duration;
   float gust  = 0.65 + 0.35*sin(phase+0.45);
