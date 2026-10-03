@@ -31,6 +31,8 @@ export type SegmentationMask = {
   height: number
   /** False when the image has no hair or clothes to animate. */
   hasMovable: boolean
+  /** Horizontal body axis (0..1): centroid of skin pixels, 0.5 when none. */
+  axisX: number
 }
 
 async function createSegmenter(vision: VisionModule): Promise<Segmenter> {
@@ -59,18 +61,26 @@ export async function segmentHairAndClothes(image: HTMLImageElement): Promise<Se
     const categories = mask.getAsUint8Array()
     const rgba = new Uint8Array(mask.width * mask.height * 4)
     let movable = 0
+    let skinCount = 0
+    let skinXSum = 0
     for (let i = 0; i < categories.length; i++) {
       const category = categories[i]
       const isHair = category === HAIR
       const isClothes = category === CLOTHES
+      const isSkin = category === BODY_SKIN || category === FACE_SKIN
       rgba[i * 4] = isHair ? 255 : 0
       rgba[i * 4 + 1] = isClothes ? 255 : 0
-      rgba[i * 4 + 2] = category === BODY_SKIN || category === FACE_SKIN ? 255 : 0
+      rgba[i * 4 + 2] = isSkin ? 255 : 0
       rgba[i * 4 + 3] = 255
       if (isHair || isClothes) movable++
+      if (isSkin) {
+        skinCount++
+        skinXSum += i % mask.width
+      }
     }
     result.close()
-    return { rgba, width: mask.width, height: mask.height, hasMovable: movable > 0 }
+    const axisX = skinCount > 0 ? skinXSum / skinCount / mask.width : 0.5
+    return { rgba, width: mask.width, height: mask.height, hasMovable: movable > 0, axisX }
   } finally {
     segmenter.close()
   }

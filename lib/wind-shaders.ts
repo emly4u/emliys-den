@@ -1,4 +1,11 @@
-// GLSL for the live wind effect (derived from live_time_flowy.py).
+// GLSL for the live wind effect, following create_flowy_gif.py:
+//  - hair: crown and roots anchored, motion grows toward the tips and the
+//    silhouette edge, while the interior of the hair mass stays calmer
+//  - cloth: sleeves and skirt get the gusts, weighted by distance from the body
+//    axis, how far the fabric hangs, and the hem
+//  - face, body and hands never move
+// The hand-drawn polygons of the script are replaced by a per-pixel segmentation
+// mask (R hair, G clothes, B skin).
 // UV y=0 is the image top, so no UNPACK_FLIP_Y is needed for the portrait texture.
 
 export const VERTEX_SHADER = `
@@ -10,20 +17,14 @@ void main(){
 }`
 
 // Pass 1 (runs once into a framebuffer): hair amplitude in R, cloth amplitude in G.
-// Driven by the segmentation mask (R hair, G clothes, B skin) so only hair and
-// clothes can move:
-//   - the mask is eroded so region edges stay put (no tearing against skin or background)
-//   - amplitude fades to zero near any skin, so roots and seams stay anchored
-//     and only free-hanging ends sway
 export const PRECOMPUTE_SHADER = `
 precision highp float;
 uniform sampler2D u_mask;
 uniform float u_aspect; /* image height / width */
+uniform float u_axis;   /* body axis, 0..1 across the image */
 varying vec2 v_uv;
 
-const float HAIR_AMP  = 10.5;
-const float CLOTH_AMP = 12.;
-const float AMP_MAX   = 15.;
+const float AMP_MAX = 15.;
 
 /* mean of the mask over 8 directions at a given radius (in image-height units) */
 vec3 ring(float radius){
@@ -37,24 +38,35 @@ vec3 ring(float radius){
 }
 
 void main(){
+  float y = v_uv.y;
   vec3 centre = texture2D(u_mask, v_uv).rgb;
 
-  /* erosion: only well-inside pixels of a region may move */
-  vec3 inner = (centre + ring(0.004) + ring(0.008) + ring(0.012)) / 4.;
-  float hair_core  = smoothstep(0.6, 0.98, inner.r);
-  float cloth_core = smoothstep(0.6, 0.98, inner.g);
+  /* feathered, slightly eroded masks: region borders stay still */
+  vec3 soft = (centre + ring(0.004) + ring(0.008) + ring(0.012)) / 4.;
+  float hair_mask  = smoothstep(0.6, 0.98, soft.r);
+  float cloth_mask = smoothstep(0.6, 0.98, soft.g);
 
-  /* proximity to skin within ~10 % of the image height */
-  float near_skin = (ring(0.02) + ring(0.04) + ring(0.07) + ring(0.10)).b / 4.;
-  float anchor    = 1. - smoothstep(0., 0.35, near_skin);
+  /* how far we are from any skin (face, neck, hands, body): 0 touching, 1 free */
+  float near_skin = (ring(0.03) + ring(0.06) + ring(0.10) + ring(0.15)).b / 4.;
+  float reach     = 1. - smoothstep(0., 0.30, near_skin);
 
-  /* cloth sways more toward the bottom of the frame (hems) */
-  float hang = 0.35 + 0.65 * smoothstep(0.30, 0.90, v_uv.y);
+  /* ---- hair: anchored roots, free tips, livelier silhouette ---- */
+  float tip        = max(reach, 0.08);
+  vec3  depth      = (ring(0.005) + ring(0.010) + ring(0.015) + ring(0.020) + ring(0.025)) / 5.;
+  float hair_edge  = 1. - smoothstep(0.5, 1., depth.r);
+  float hair_a     = hair_mask * pow(tip, 1.2) * (0.35 + 0.65*hair_edge)
+                     * (10.5 + 1.5*sin(y*34.25));
 
-  float hair_a  = hair_core  * anchor * HAIR_AMP;
-  float cloth_a = cloth_core * anchor * hang * CLOTH_AMP;
+  /* ---- cloth: sleeves and skirt, weighted outward and downward ---- */
+  float outer   = clamp((abs(v_uv.x - u_axis) - 0.109) / 0.205, 0., 1.);
+  float hanging = clamp((y - 0.299) / 0.540, 0., 1.);
+  float hem     = clamp((y - 0.569) / 0.431, 0., 1.);
+  float sleeve_a = clamp(smoothstep(0.28, 0.50, y) * (1. - smoothstep(0.70, 0.85, y)) * outer, 0., 1.)
+                   * (1.2 + 11.*hanging) * (0.40 + 0.60*outer);
+  float skirt_a  = smoothstep(0.52, 0.68, y) * (1. + 14.*hem) * (0.20 + 0.80*outer);
+  float cloth_a  = cloth_mask * reach * max(sleeve_a, skirt_a);
 
-  gl_FragColor = vec4(hair_a / AMP_MAX, cloth_a / AMP_MAX, 0., 1.);
+  gl_FragColor = vec4(clamp(hair_a / AMP_MAX, 0., 1.), clamp(cloth_a / AMP_MAX, 0., 1.), 0., 1.);
 }`
 
 // Pass 2 (every frame): displace the portrait by the animated wind field.
@@ -67,6 +79,7 @@ uniform float u_wind;
 uniform float u_duration;
 uniform float u_w;
 uniform float u_h;
+uniform float u_cx;     /* body axis in pixels */
 uniform float u_scale;  /* image width / reference width: keeps motion resolution independent */
 uniform float u_freq_yc;
 uniform float u_freq_xc;
@@ -85,7 +98,7 @@ void main(){
   float cloth_a = amp.g;
 
   float hp = yy*0.022 + xx*0.006;
-  float cp = yy*u_freq_yc + abs(xx - 0.5*u_w)*u_freq_xc;
+  float cp = yy*u_freq_yc + abs(xx - u_cx)*u_freq_xc;
 
   float phase = PI2 * mod(u_time, u_duration) / u_duration;
   float gust  = 0.65 + 0.35*sin(phase+0.45);

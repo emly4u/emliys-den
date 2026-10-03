@@ -4,23 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@keyframes den-image-drift {
-  0%, 100% { transform: scale(1.01) translate3d(0, 0, 0); }
-  50% { transform: scale(1.035) translate3d(0.35%, -0.25%, 0); }
-}
-
-.image-motion img {
-  animation: den-image-drift 6s ease-in-out infinite;
-  will-change: transform;
-}
-
-html[data-motion="off"] .image-motion img,
-[data-motion-image][data-local-motion="off"] img { animation: none; }
-
-@media (prefers-reduced-motion: reduce) {
-  .image-motion img { animation: none; }
-}
-
 @theme inline {
   --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;

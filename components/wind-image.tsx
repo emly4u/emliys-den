@@ -5,7 +5,8 @@ import { motionEventName } from "@/components/animation-toggle"
 import { segmentHairAndClothes } from "@/lib/wind-segmentation"
 import { ANIMATE_SHADER, PRECOMPUTE_SHADER, VERTEX_SHADER } from "@/lib/wind-shaders"
 
-const WIND = 1.25
+// Gentler than the 1.25 default of create_flowy_gif.py, which read as too much distortion here.
+const WIND = 0.8
 const DURATION_SECONDS = 6
 // The reference portrait width the wind amplitudes and frequencies were tuned for.
 const REFERENCE_WIDTH = 1148
@@ -115,6 +116,7 @@ export function WindCanvas({ imageId }: { imageId: number }) {
       const precompute = useProgramWithQuad(gl, createProgram(gl, PRECOMPUTE_SHADER))
       precompute.set1i("u_mask", MASK_UNIT)
       precompute.set1f("u_aspect", height / width)
+      precompute.set1f("u_axis", mask.axisX)
       gl.viewport(0, 0, width, height)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
       gl.bindFramebuffer(gl.FRAMEBUFFER, null)
@@ -128,6 +130,7 @@ export function WindCanvas({ imageId }: { imageId: number }) {
       animate.set1f("u_duration", DURATION_SECONDS)
       animate.set1f("u_w", width)
       animate.set1f("u_h", height)
+      animate.set1f("u_cx", mask.axisX * width)
       animate.set1f("u_scale", scale)
       animate.set1f("u_freq_yc", 0.013 / scale)
       animate.set1f("u_freq_xc", 0.007 / scale)
