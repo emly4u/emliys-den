@@ -1,6 +1,7 @@
 import { ImageOff, Images, Sparkles } from "lucide-react"
 import { after } from "next/server"
 import { revalidatePath } from "next/cache"
+import { NativeBannerAd, ResponsiveBannerAd, SponsoredLink } from "@/components/ad-slot"
 import { SiteHeader } from "@/components/site-header"
 import { GalleryGrid } from "@/components/gallery-grid"
 import { SortToggle } from "@/components/sort-toggle"
@@ -58,6 +59,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
+        <ResponsiveBannerAd className="mt-8" />
+        <SponsoredLink className="mt-2 text-center" />
+
         <section className="mt-12" aria-labelledby="collection-heading">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -81,6 +85,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <GalleryGrid initialImages={images} initialHasMore={hasMore} sort={sort} />
           )}
         </section>
+
+        <NativeBannerAd className="mt-12" />
       </main>
     </div>
   )
