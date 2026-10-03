@@ -13,6 +13,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const { sort: sortParam } = await searchParams
   const sort: ImageSort = sortParam === "popular" ? "popular" : "new"
   const { images, hasMore } = await getImages(sort)
+  const heroImage = images.length > 0 ? images[Math.floor(Math.random() * images.length)] : null
 
   after(async () => {
     try {
@@ -28,7 +29,18 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 md:px-8 md:pb-24 md:pt-14">
         <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-card px-6 py-10 shadow-sm md:px-12 md:py-16">
-          <div className="pointer-events-none absolute right-0 top-0 size-48 rounded-bl-full bg-accent/30" aria-hidden="true" />
+          {heroImage?.blobUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={heroImage.blobUrl}
+              alt=""
+              aria-hidden="true"
+              referrerPolicy="no-referrer"
+              className="pointer-events-none absolute inset-y-0 right-0 h-full w-full object-cover opacity-30 [mask-image:linear-gradient(to_right,transparent_0%,black_70%)] md:w-3/5 md:opacity-100 md:[mask-image:linear-gradient(to_right,transparent_0%,black_55%)]"
+            />
+          ) : (
+            <div className="pointer-events-none absolute right-0 top-0 size-48 rounded-bl-full bg-accent/30" aria-hidden="true" />
+          )}
           <div className="relative max-w-3xl">
             <p className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-primary">
               <Sparkles className="size-4" aria-hidden="true" /> A living archive
