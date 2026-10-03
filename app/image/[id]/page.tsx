@@ -10,6 +10,7 @@ import { CommentSection } from "@/components/comment-section"
 import { ImageActions } from "@/components/image-actions"
 import { ImageContextMenu } from "@/components/image-context-menu"
 import { CachedDriveImage } from "@/components/cached-drive-image"
+import { ImageMotionButton, MotionImage } from "@/components/animation-toggle"
 import { buttonVariants } from "@/components/ui/button"
 import { incrementView } from "@/app/actions/gallery"
 import { getComments, getImage } from "@/lib/queries"
@@ -127,17 +128,18 @@ export default async function ImagePage({ params }: { params: Promise<{ id: stri
                 className="group block overflow-hidden rounded-2xl border border-border/60 bg-card"
                 aria-label={`Open ${image.name} in Google Drive`}
               >
-                <CachedDriveImage
+                <MotionImage><CachedDriveImage
                   fileId={image.driveFileId}
                   thumbnailUrl={thumbnailUrl}
                   alt={image.name}
                   className="max-h-[70vh] w-full object-contain transition-opacity group-hover:opacity-90"
-                />
+                /></MotionImage>
               </a>
             </ImageContextMenu>
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-3">
-                <CopyLink url={`https://drive.google.com/file/d/${image.driveFileId}/view`} />
+                <CopyLink url={`https://emly4u.vercel.app/image/${imageId}`} />
+                <ImageMotionButton />
                 <ImageActions
                   imageName={image.name}
                   imageUrl={thumbnailUrl}

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Home, Library } from "lucide-react"
 import { SyncButton } from "./sync-button"
 import { ThemeToggle } from "./theme-toggle"
+import { AnimationToggle } from "./animation-toggle"
 
 export function SiteHeader() {
   return (
@@ -18,6 +19,7 @@ export function SiteHeader() {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <AnimationToggle />
           <SyncButton />
         </div>
       </div>
